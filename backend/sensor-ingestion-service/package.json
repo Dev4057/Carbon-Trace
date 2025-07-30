@@ -1,0 +1,11 @@
+{
+  "name": "sensor-ingestion-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": { "start": "node index.js" },
+  "dependencies": {
+    "mqtt": "^5.3.5",
+    "pg": "^8.12.0",
+    "ws": "^8.18.0"
+  }
+}
