@@ -1,55 +1,55 @@
-services:
-  user-auth-service:
-    build: ./user-auth-service
-    container_name: user-auth-service
-    restart: always
-    ports:
-      - "3001:3001"
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - JWT_SECRET=${JWT_SECRET}
-    depends_on:
-      - postgres-db
+    services:
+      user-auth-service:
+        build: ./user-auth-service
+        container_name: user-auth-service
+        restart: always
+        ports:
+          - "3001:3001"
+        environment:
+          - POSTGRES_USER=${POSTGRES_USER}
+          - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          - POSTGRES_DB=${POSTGRES_DB}
+          - JWT_SECRET=${JWT_SECRET}
+        depends_on:
+          - postgres-db
 
-  sensor-ingestion-service:
-    build: ./sensor-ingestion-service
-    container_name: sensor-ingestion-service
-    restart: always
-    ports:
-      - "3004:3002" # <--- ADD THIS LINE! Host port 3004 maps to container port 3002
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    depends_on:
-      - postgres-db
-      - mosquitto
+      sensor-ingestion-service:
+        build: ./sensor-ingestion-service
+        container_name: sensor-ingestion-service
+        restart: always
+        ports:
+          - "3002:3002" # <-- THIS LINE IS NOW CORRECT
+        environment:
+          - POSTGRES_USER=${POSTGRES_USER}
+          - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          - POSTGRES_DB=${POSTGRES_DB}
+        depends_on:
+          - postgres-db
+          - mosquitto
 
-  mosquitto:
-    image: eclipse-mosquitto:2
-    container_name: mosquitto
-    restart: always
-    ports:
-      - "1883:1883"
-      - "9001:9001"
-      - "3002:3002" # Mosquitto's WebSocket is still on host port 3002
+      mosquitto:
+        image: eclipse-mosquitto:2
+        container_name: mosquitto
+        restart: always
+        ports:
+          - "1883:1883"
+          - "9001:9001"
+        volumes:
+          - ./mosquitto/config:/mosquitto/config
+
+      postgres-db:
+        image: postgres:15
+        container_name: postgres-db
+        restart: always
+        environment:
+          - POSTGRES_USER=${POSTGRES_USER}
+          - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          - POSTGRES_DB=${POSTGRES_DB}
+        ports:
+          - "5432:5432"
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+
     volumes:
-      - ./mosquitto/config:/mosquitto/config
-
-  postgres-db:
-    image: postgres:15
-    container_name: postgres-db
-    restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+      postgres_data:
+    
