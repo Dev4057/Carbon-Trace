@@ -1,6 +1,6 @@
 const express = require('express');
 const { Pool } = require('pg');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // <-- THIS LINE IS THE ONLY CHANGE
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const fs = require('fs');
@@ -29,61 +29,138 @@ const pool = new Pool({
 });
 
 // --- API Endpoints ---
-// ... (GET /, /register, /login, /me, /calculate, /upload endpoints are unchanged) ...
-app.get('/', (req, res) => { res.send('Hello from the Carbontrace User & Auth Service!'); });
-app.post('/register', async (req, res) => { /* ... existing code ... */ });
-app.post('/login', async (req, res) => { /* ... existing code ... */ });
-app.get('/me', authMiddleware, async (req, res) => { /* ... existing code ... */ });
-app.post('/calculate', authMiddleware, async (req, res) => { /* ... existing code ... */ });
-app.post('/upload', authMiddleware, upload.single('data_file'), (req, res) => { /* ... existing code ... */ });
+app.get('/', (req, res) => {
+  res.send('Hello from the Carbontrace User & Auth Service!');
+});
 
-
-// --- UPGRADED /api/history ENDPOINT ---
-app.get('/api/history', authMiddleware, async (req, res) => {
+app.post('/register', async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { range, groupBy } = req.query; // Get filter params from URL
+    const { email, password } = req.body;
+    const password_hash = await bcrypt.hash(password, saltRounds);
+    const newUser = await pool.query(
+      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, created_at",
+      [email, password_hash]
+    );
+    res.status(201).json({
+      message: "User registered successfully",
+      user: newUser.rows[0]
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
 
-    let selectClause, whereClause, groupByClause, orderByClause;
-    let queryParams = [userId];
-
-    whereClause = `WHERE user_id = $1`;
-
-    // --- Date Range Filtering Logic ---
-    if (range) {
-        const intervalValue = parseInt(range, 10);
-        // Special case for 24-hour view
-        if (groupBy === 'hour' && range === '1') {
-            whereClause += ` AND created_at >= NOW() - INTERVAL '24 hours'`;
-        } else {
-            whereClause += ` AND created_at >= NOW() - INTERVAL '${intervalValue} days'`;
-        }
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const userResult = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    if (userResult.rows.length === 0) {
+      return res.status(401).json("Invalid credentials");
     }
-
-    // --- Data Aggregation Logic ---
-    if (groupBy === 'hour' && range === '1') {
-        selectClause = `SELECT DATE_TRUNC('hour', created_at) as date, SUM(co2e_kg) as total_co2e_kg`;
-        groupByClause = `GROUP BY DATE_TRUNC('hour', created_at)`;
-        orderByClause = `ORDER BY date ASC`;
-    } else { // Default to daily aggregation for all other ranges
-        selectClause = `SELECT DATE(created_at) as date, SUM(co2e_kg) as total_co2e_kg`;
-        groupByClause = `GROUP BY DATE(created_at)`;
-        orderByClause = `ORDER BY date ASC`;
+    const user = userResult.rows[0];
+    const validPassword = await bcrypt.compare(password, user.password_hash);
+    if (!validPassword) {
+      return res.status(401).json("Invalid credentials");
     }
+    const payload = { user: { id: user.id } };
+    const token = jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    res.json({ token });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
 
-    const finalQuery = `${selectClause} FROM emissions ${whereClause} ${groupByClause} ${orderByClause}`;
-
-    const historyData = await pool.query(finalQuery, queryParams);
-    res.json(historyData.rows);
-
+app.get('/me', authMiddleware, async (req, res) => {
+  try {
+    const user = await pool.query("SELECT id, email, created_at FROM users WHERE id = $1", [
+      req.user.id
+    ]);
+    res.json(user.rows[0]);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server Error');
   }
 });
 
+app.post('/calculate', authMiddleware, async (req, res) => {
+  try {
+    const { activity_type, input_value } = req.body;
+    const userId = req.user.id;
+    if (!emissionFactors[activity_type]) {
+      return res.status(400).json({ msg: 'Invalid activity type' });
+    }
+    const factor = emissionFactors[activity_type];
+    const co2e_kg = input_value * factor;
+    const newEmission = await pool.query(
+      "INSERT INTO emissions (user_id, activity_type, input_value, co2e_kg) VALUES ($1, $2, $3, $4) RETURNING *",
+      [userId, activity_type, input_value, co2e_kg]
+    );
+    res.json(newEmission.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
 
-// --- Start Server ---
+app.post('/upload', authMiddleware, upload.single('data_file'), (req, res) => {
+    const results = [];
+    const userId = req.user.id;
+    let totalEmissions = 0;
+    fs.createReadStream(req.file.path)
+        .pipe(csv())
+        .on('data', (data) => results.push(data))
+        .on('end', async () => {
+        try {
+            for (const row of results) {
+                const { activity_type, input_value } = row;
+                if (emissionFactors[activity_type]) {
+                    const factor = emissionFactors[activity_type];
+                    const co2e_kg = parseFloat(input_value) * factor;
+                    totalEmissions += co2e_kg;
+                    await pool.query(
+                    "INSERT INTO emissions (user_id, activity_type, input_value, co2e_kg) VALUES ($1, $2, $3, $4)",
+                    [userId, activity_type, parseFloat(input_value), co2e_kg]
+                    );
+                }
+            }
+            fs.unlinkSync(req.file.path);
+            res.json({ 
+                message: "File processed successfully", 
+                recordsAdded: results.length,
+                totalEmissions: parseFloat(totalEmissions.toFixed(2))
+            });
+        } catch (err) {
+            console.error(err.message);
+            fs.unlinkSync(req.file.path);
+            res.status(500).send('Server Error during DB insertion');
+        }
+        });
+});
+
+app.get('/api/history', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { range, groupBy } = req.query;
+    let query, queryParams = [userId];
+    if (groupBy === 'hour' && range === '1') {
+        query = `SELECT DATE_TRUNC('hour', created_at) as date, SUM(co2e_kg) as total_co2e_kg FROM emissions WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '24 hours' GROUP BY DATE_TRUNC('hour', created_at) ORDER BY date ASC`;
+    } else {
+        query = `SELECT DATE(created_at) as date, SUM(co2e_kg) as total_co2e_kg FROM emissions WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '${parseInt(range || 30, 10)} days' GROUP BY DATE(created_at) ORDER BY date ASC`;
+    }
+    const historyData = await pool.query(query, queryParams);
+    res.json(historyData.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 app.listen(port, () => {
   console.log(`User & Auth Service listening on port ${port}`);
 });
