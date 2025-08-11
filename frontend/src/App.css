@@ -1,0 +1,530 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+  --foreground-muted: #a1a1aa;
+  --card: rgba(17, 17, 17, 0.7);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --input-bg: rgba(30, 30, 30, 0.5);
+  --accent-cyan: #22d3ee;
+  --accent-purple: #a78bfa;
+  --accent-green: #34d399;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Animated Aurora Background --- */
+.aurora-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: -1;
+  opacity: 0.3;
+  background: radial-gradient(at 20% 20%, var(--accent-cyan) 0px, transparent 50%),
+              radial-gradient(at 80% 20%, var(--accent-purple) 0px, transparent 50%),
+              radial-gradient(at 20% 80%, var(--accent-green) 0px, transparent 50%),
+              radial-gradient(at 80% 80%, var(--accent-blue) 0px, transparent 50%);
+  animation: aurora 20s ease-in-out infinite alternate;
+}
+
+@keyframes aurora {
+  0% { transform: scale(1) rotate(0deg); }
+  100% { transform: scale(1.5) rotate(180deg); }
+}
+
+
+/* --- General Layout --- */
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+/* --- Header Component --- */
+.main-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+  z-index: 100;
+}
+
+.main-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--foreground);
+  text-decoration: none;
+  gap: 0.5rem;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-links a {
+  color: var(--foreground-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.nav-links a:hover {
+  color: var(--foreground);
+}
+
+.btn-nav {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  background-color: var(--foreground);
+  color: var(--background);
+  font-weight: 600;
+}
+
+/* --- Landing Page --- */
+.landing-content {
+  text-align: center;
+  animation: fadeIn 1s ease-out;
+}
+
+.landing-content h1 {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+  background: linear-gradient(90deg, var(--foreground) 70%, var(--foreground-muted));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.05em;
+}
+
+.landing-content p {
+  font-size: 1.25rem;
+  color: var(--foreground-muted);
+  max-width: 600px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.6;
+}
+
+.btn-cta {
+  font-size: 1.1rem;
+  padding: 1rem 2.5rem;
+  background: var(--foreground);
+  color: var(--background);
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.btn-cta:hover {
+  transform: scale(1.05);
+}
+
+/* --- Glassmorphism Card for Auth & Dashboard --- */
+.glass-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.glass-card h1 {
+  text-align: center;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 2rem;
+}
+
+/* --- Form Elements --- */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background-color: var(--input-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--foreground);
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: var(--foreground);
+  color: var(--background);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-submit:hover {
+  opacity: 0.9;
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: var(--foreground-muted);
+}
+
+.auth-switch a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* --- Dashboard --- */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    text-align: left;
+}
+
+.btn-logout {
+    background: none;
+    border: 1px solid var(--card-border);
+    color: var(--foreground-muted);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-logout:hover {
+    background-color: var(--card-border);
+    color: var(--foreground);
+}
+
+.data-card {
+    background: var(--input-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.data-card h2 {
+    margin-top: 0;
+    color: var(--foreground-muted);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.latest-reading p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.latest-reading strong {
+    color: var(--accent-cyan);
+    font-weight: 600;
+}
+
+/* --- Fade In Animation --- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}.calculation-container {
+  width: 100%;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: 1.5rem;
+}
+
+.tabs button {
+  background: none;
+  border: none;
+  color: var(--foreground-muted);
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.tabs button:hover {
+  color: var(--foreground);
+}
+
+.tabs button.active {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.tabs button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--accent-cyan);
+}
+
+.calc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.file-drop-zone {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  border: 2px dashed var(--card-border);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  color: var(--foreground-muted);
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.file-drop-zone:hover {
+  border-color: var(--accent-cyan);
+  background-color: rgba(34, 211, 238, 0.1);
+}
+
+.file-drop-zone input[type="file"] {
+  display: none;
+}
+
+.file-drop-zone span {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.file-format-note {
+  font-size: 0.8rem;
+  color: var(--foreground-muted);
+  text-align: center;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.file-format-note code {
+    background-color: var(--input-bg);
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.result-message {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: var(--input-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.recent-reading-item {
+  border-bottom: 1px solid var(--card-border);
+  padding: 0.75rem 0;
+  color: var(--foreground-muted);
+}
+
+.recent-reading-item:last-child {
+  border-bottom: none;
+}
+
+.chart-container {
+  width: 100%;
+  height: 400px; /* Fixed height for the container */
+  margin-top: 2rem;
+}
+
+/* --- Active NavLink Style --- */
+.nav-links a.nav-link-active {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background-color: var(--input-bg);
+  padding: 0.5rem;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--foreground-muted);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background-color: var(--card-border);
+  color: var(--foreground);
+}
+
+.filter-btn.active {
+  background-color: var(--foreground);
+  color: var(--background);
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+}
+
+.filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background-color: var(--input-bg);
+  padding: 0.5rem;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--foreground-muted);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background-color: var(--card-border);
+  color: var(--foreground);
+}
+
+.filter-btn.active {
+  background-color: var(--foreground);
+  color: var(--background);
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+}
+.filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background-color: var(--input-bg);
+  padding: 0.5rem;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--foreground-muted);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background-color: var(--card-border);
+  color: var(--foreground);
+}
+
+.filter-btn.active {
+  background-color: var(--foreground);
+  color: var(--background);
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+}
+
+/* --- Custom Chart Tooltip --- */
+.custom-tooltip {
+    background: rgba(10, 10, 10, 0.8);
+    border: 1px solid var(--card-border);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+}
+
+.custom-tooltip .label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.btn-logout-header {
+  background: none;
+  border: none;
+  color: var(--foreground-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  padding: 0;
+  margin-left: 1.5rem;
+  transition: color 0.2s ease;
+}
+
+.btn-logout-header:hover {
+  color: var(--foreground);
+}
